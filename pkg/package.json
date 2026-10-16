@@ -1,0 +1,15 @@
+{
+  "name": "rainbow-table",
+  "type": "module",
+  "version": "0.1.0",
+  "files": [
+    "rainbow_table_bg.wasm",
+    "rainbow_table.js",
+    "rainbow_table.d.ts"
+  ],
+  "main": "rainbow_table.js",
+  "types": "rainbow_table.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
