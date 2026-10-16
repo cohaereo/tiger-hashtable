@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Tiger Wordlist</title>
+        <style>
+            body {
+                max-width: 720px;
+                margin: 3rem auto;
+                padding: 0 1rem;
+                font:
+                    16px system-ui,
+                    sans-serif;
+            }
+            input {
+                box-sizing: border-box;
+                width: 100%;
+                padding: 0.6rem;
+            }
+            #status {
+                color: #555;
+            }
+            li {
+                font-family: monospace;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Tiger Wordlist</h1>
+        <i id="status">
+            Loading wordlist, please wait... (This may take up to a minute)
+        </i>
+        <p>
+            <input
+                id="hash"
+                type="text"
+                placeholder="XXXXXXXX (32-bit hexadecimal hash)"
+                disabled
+            />
+        </p>
+        <p id="summary"></p>
+        <ul id="results"></ul>
+        <script type="module">
+            import init, {
+                load_wordlist,
+                lookup_hash,
+            } from "./pkg/rainbow_table.js";
+
+            const status = document.querySelector("#status");
+            const input = document.querySelector("#hash");
+            const summary = document.querySelector("#summary");
+            const results = document.querySelector("#results");
+
+            async function loadWordlist() {
+                await init();
+                const response = await fetch("./wordlist.txt.zst");
+                if (!response.ok)
+                    throw new Error(
+                        `fetch failed with status ${response.status}`,
+                    );
+                const compressed = new Uint8Array(await response.arrayBuffer());
+                const count = load_wordlist(compressed);
+                status.textContent = `Loaded ${count.toLocaleString()} strings.`;
+                input.disabled = false;
+            }
+
+            input.addEventListener("input", () => {
+                const text = input.value.trim().replace(/^0x/i, "");
+                results.replaceChildren();
+                if (!text) {
+                    summary.textContent = "";
+                    return;
+                }
+                if (!/^[\da-f]{1,8}$/i.test(text)) {
+                    summary.textContent =
+                        "Enter a valid 32-bit hexadecimal hash.";
+                    return;
+                }
+
+                const words = lookup_hash(Number.parseInt(text, 16));
+                summary.textContent = `${words.length} matches`;
+                results.replaceChildren(
+                    ...Array.from(words, (word) => {
+                        const item = document.createElement("li");
+                        item.textContent = word;
+                        return item;
+                    }),
+                );
+            });
+
+            loadWordlist().catch((error) => {
+                status.textContent = `Could not load wordlist: ${error}`;
+            });
+        </script>
+    </body>
+</html>
